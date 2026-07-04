@@ -1,0 +1,1292 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PA4 · Prototipo Inkafarma — Validación de receta</title>
+  <style>
+    :root {
+      --inka-green: #00A651;
+      --inka-green-dark: #046A38;
+      --inka-green-deep: #034021;
+      --inka-yellow: #FFCB05;
+      --inka-red: #E52421;
+      --ink: #12181A;
+      --muted: #6B7680;
+      --line: #E6E9EA;
+      --bg-soft: #EAF7F0;
+      --ribbon-bg: #EEF2F6;
+      --calm-blue: #EAF3FF;
+      --calm-blue-line: #BCDCFF;
+      --calm-blue-text: #0C5AA6;
+      --social-bg: #FFF7E0;
+      --social-line: #FFE38F;
+      --social-text: #8A5A00;
+      --radius: 18px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background:
+        radial-gradient(circle at 12% 8%, #dff3ea 0%, transparent 40%),
+        radial-gradient(circle at 90% 85%, #eaf3ff 0%, transparent 45%),
+        #fbfcfb;
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 36px 16px 60px;
+    }
+
+    .stage {
+      display: flex;
+      gap: 40px;
+      flex-wrap: wrap;
+      justify-content: center;
+      max-width: 1040px;
+      width: 100%;
+    }
+
+    .panel-left {
+      width: 290px;
+      padding-top: 6px;
+    }
+
+    .eyebrow {
+      font-size: 11px;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--inka-green-dark);
+      font-weight: 700;
+      margin: 0 0 6px;
+    }
+
+    .panel-left h1 {
+      font-size: 22px;
+      line-height: 1.25;
+      margin: 0 0 14px;
+      color: var(--ink);
+    }
+
+    .panel-left p {
+      font-size: 13.5px;
+      color: var(--muted);
+      line-height: 1.5;
+      margin: 0 0 18px;
+    }
+
+    .step-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .step-list li {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      color: var(--muted);
+      padding: 8px 10px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background .15s;
+    }
+
+    .step-list li:hover {
+      background: #eef2f1;
+    }
+
+    .step-list li.active {
+      background: var(--inka-green);
+      color: #fff;
+      font-weight: 600;
+    }
+
+    .step-num {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #dfe6e4;
+      color: #5c6866;
+      font-size: 11px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .step-list li.active .step-num {
+      background: rgba(255, 255, 255, .25);
+      color: #fff;
+    }
+
+    .east-toggle {
+      margin-top: 22px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12.5px;
+      color: var(--ink);
+      background: #fff;
+      border: 1px solid var(--line);
+      padding: 10px 12px;
+      border-radius: 12px;
+    }
+
+    .switch {
+      position: relative;
+      width: 34px;
+      height: 19px;
+      flex-shrink: 0;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background: #c8cfcd;
+      border-radius: 20px;
+      transition: .2s;
+    }
+
+    .slider:before {
+      content: "";
+      position: absolute;
+      height: 14px;
+      width: 14px;
+      left: 2.5px;
+      top: 2.5px;
+      background: white;
+      border-radius: 50%;
+      transition: .2s;
+    }
+
+    input:checked+.slider {
+      background: var(--inka-green);
+    }
+
+    input:checked+.slider:before {
+      transform: translateX(15px);
+    }
+
+    .legend {
+      margin-top: 14px;
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+      max-height: 520px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .legend-card {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-left: 4px solid var(--c);
+      border-radius: 10px;
+      padding: 10px 12px;
+    }
+
+    .legend-card b {
+      display: block;
+      font-size: 12px;
+      color: var(--c);
+      margin-bottom: 4px;
+      letter-spacing: .03em;
+    }
+
+    .legend-card p {
+      margin: 0;
+      font-size: 11.5px;
+      line-height: 1.5;
+      color: var(--ink);
+    }
+
+    /* PHONE */
+    .phone-wrap {
+      position: relative;
+    }
+
+    .phone {
+      width: 346px;
+      height: 730px;
+      background: #fff;
+      border-radius: 38px;
+      border: 8px solid #101314;
+      box-shadow: 0 30px 60px -20px rgba(0, 0, 0, .35), 0 2px 8px rgba(0, 0, 0, .08);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .notch {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 120px;
+      height: 22px;
+      background: #101314;
+      border-radius: 0 0 16px 16px;
+      z-index: 20;
+    }
+
+    .status-bar {
+      height: 26px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      font-size: 10.5px;
+      font-weight: 600;
+      color: #fff;
+      background: var(--inka-green-deep);
+    }
+
+    .screen {
+      position: absolute;
+      inset: 0;
+      top: 26px;
+      background: #fff;
+      display: none;
+      flex-direction: column;
+      animation: fadeIn .25s ease;
+    }
+
+    .screen.active {
+      display: flex;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateX(8px);
+      }
+
+      to {
+        opacity: 1;
+        transform: none;
+      }
+    }
+
+    /* ---- Real Inkafarma-style header block ---- */
+    .promo-ribbon {
+      background: var(--ribbon-bg);
+      padding: 6px 12px;
+      font-size: 9.5px;
+      color: var(--inka-green-deep);
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+
+    .promo-ribbon .pill {
+      background: var(--inka-yellow);
+      color: #3a2c00;
+      padding: 1px 7px;
+      border-radius: 8px;
+      font-weight: 800;
+    }
+
+    .navbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      background: #fff;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .logo-mark {
+      width: 30px;
+      height: 30px;
+      border-radius: 9px;
+      background: var(--inka-yellow);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .logo-mark svg {
+      width: 22px;
+      height: 22px;
+    }
+
+    .logo-word {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--inka-green-dark);
+      letter-spacing: -.2px;
+    }
+
+    .utility-line {
+      padding: 4px 14px;
+      font-size: 9.5px;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      border-bottom: 1px solid var(--line);
+      background: #fff;
+    }
+
+    .utility-line b {
+      color: var(--inka-green-dark);
+      font-weight: 700;
+    }
+
+    .nav-icons {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 15px;
+      color: var(--ink);
+    }
+
+    .nav-icons .cart-badge {
+      position: relative;
+    }
+
+    .nav-icons .cart-badge span {
+      position: absolute;
+      top: -6px;
+      right: -8px;
+      background: var(--calm-blue-text);
+      color: #fff;
+      font-size: 8px;
+      font-weight: 800;
+      border-radius: 50%;
+      width: 14px;
+      height: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .cat-row {
+      display: flex;
+      gap: 8px;
+      padding: 8px 14px;
+      overflow-x: auto;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .cat-pill {
+      font-size: 10.5px;
+      font-weight: 600;
+      color: var(--ink);
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .pickup-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      font-size: 10.5px;
+      color: var(--muted);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .pickup-row .dist {
+      margin-left: auto;
+      background: var(--bg-soft);
+      color: var(--inka-green-dark);
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 9.5px;
+    }
+
+    .topbar-simple {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .topbar-simple b {
+      font-size: 13.5px;
+      color: var(--ink);
+    }
+
+    .content {
+      padding: 16px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .prod-img {
+      height: 140px;
+      border-radius: 14px;
+      background: #f1f3f2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #9aa5a1;
+      font-size: 12px;
+      margin-bottom: 14px;
+      border: 1px solid var(--line);
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: #f0ecff;
+      color: #5b3fd1;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 9px;
+      border-radius: 20px;
+      margin-bottom: 8px;
+    }
+
+    .prod-title {
+      font-size: 15.5px;
+      font-weight: 700;
+      color: var(--ink);
+      margin: 4px 0;
+    }
+
+    .price {
+      font-size: 19px;
+      font-weight: 800;
+      color: var(--ink);
+      margin: 8px 0 16px;
+    }
+
+    .btn-primary {
+      width: 100%;
+      background: var(--inka-green);
+      color: #fff;
+      border: none;
+      padding: 13px;
+      border-radius: 24px;
+      font-size: 14.5px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .btn-primary:active {
+      background: var(--inka-green-dark);
+    }
+
+    .btn-secondary {
+      width: 100%;
+      background: #fff;
+      color: var(--inka-green-dark);
+      border: 1.5px solid var(--inka-green);
+      padding: 11px;
+      border-radius: 24px;
+      font-size: 13.5px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+
+    .banner-soft {
+      background: var(--calm-blue);
+      border: 1px solid var(--calm-blue-line);
+      color: var(--calm-blue-text);
+      font-size: 12.5px;
+      padding: 11px 12px;
+      border-radius: 12px;
+      display: flex;
+      gap: 8px;
+      margin-bottom: 14px;
+      line-height: 1.4;
+    }
+
+    .cart-item {
+      display: flex;
+      gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .cart-thumb {
+      width: 52px;
+      height: 52px;
+      border-radius: 10px;
+      background: #f1f3f2;
+      flex-shrink: 0;
+    }
+
+    .guide-title {
+      font-size: 16.5px;
+      font-weight: 800;
+      color: var(--ink);
+      margin: 2px 0 4px;
+    }
+
+    .guide-sub {
+      font-size: 12.5px;
+      color: var(--muted);
+      margin: 0 0 16px;
+      line-height: 1.45;
+    }
+
+    .receta-line {
+      height: 8px;
+      background: #e7ebe9;
+      border-radius: 4px;
+      margin-bottom: 8px;
+    }
+
+    .checklist {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 18px;
+    }
+
+    .checklist li {
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+      font-size: 12.5px;
+      color: var(--ink);
+      padding: 6px 0;
+    }
+
+    .check-ic {
+      color: var(--inka-green);
+      font-weight: 900;
+      flex-shrink: 0;
+    }
+
+    /* VALIDATION SCREEN — núcleo de la intervención */
+    .val-wrap {
+      padding: 20px 18px;
+      text-align: center;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+
+    .val-icon {
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      background: #eafaf1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 4px auto 12px;
+      font-size: 24px;
+    }
+
+    .val-title {
+      font-size: 15.5px;
+      font-weight: 800;
+      color: var(--ink);
+      margin: 0 0 4px;
+    }
+
+    .val-sub {
+      font-size: 12px;
+      color: var(--muted);
+      margin: 0 0 18px;
+    }
+
+    .progress-track {
+      height: 10px;
+      background: #eef2f1;
+      border-radius: 20px;
+      overflow: hidden;
+      margin-bottom: 8px;
+      position: relative;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 4%;
+      border-radius: 20px;
+      background: linear-gradient(90deg, #0EA64C, #7BE0A4, #0EA64C);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s linear infinite;
+      transition: width .4s ease;
+    }
+
+    @keyframes shimmer {
+      0% {
+        background-position: 0% 0;
+      }
+
+      100% {
+        background-position: 200% 0;
+      }
+    }
+
+    .countdown-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11.5px;
+      color: var(--muted);
+      margin-bottom: 16px;
+    }
+
+    .countdown-row b {
+      color: var(--ink);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .social-banner {
+      background: var(--social-bg);
+      border: 1px solid var(--social-line);
+      color: var(--social-text);
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 11.5px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 14px;
+      text-align: left;
+      line-height: 1.35;
+    }
+
+    .steps-track {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      text-align: left;
+      margin-bottom: 14px;
+    }
+
+    .step-row {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      position: relative;
+      padding-bottom: 20px;
+    }
+
+    .step-row:last-child {
+      padding-bottom: 0;
+    }
+
+    .step-row::before {
+      content: "";
+      position: absolute;
+      left: 11px;
+      top: 24px;
+      bottom: 0;
+      width: 2px;
+      background: var(--line);
+    }
+
+    .step-row:last-child::before {
+      display: none;
+    }
+
+    .step-dot {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #eef2f1;
+      color: #9aa5a1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 800;
+      flex-shrink: 0;
+      z-index: 1;
+    }
+
+    .step-row.done .step-dot {
+      background: var(--inka-green);
+      color: #fff;
+    }
+
+    .step-row.now .step-dot {
+      background: #fff;
+      color: var(--inka-green);
+      border: 2px solid var(--inka-green);
+    }
+
+    .step-text b {
+      display: block;
+      font-size: 12px;
+      color: var(--ink);
+    }
+
+    .step-text span {
+      font-size: 10.5px;
+      color: var(--muted);
+    }
+
+    .assurance-box {
+      background: var(--calm-blue);
+      border: 1px solid var(--calm-blue-line);
+      border-radius: 14px;
+      padding: 12px 13px;
+      text-align: left;
+      margin-bottom: 14px;
+      display: flex;
+      gap: 9px;
+    }
+
+    .assurance-box p {
+      margin: 0;
+      font-size: 11.5px;
+      color: var(--calm-blue-text);
+      line-height: 1.4;
+    }
+
+    .assurance-box strong {
+      display: block;
+      font-size: 12px;
+      margin-bottom: 2px;
+      color: #083d73;
+    }
+
+    .human-row {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      background: #fbfbfb;
+      border: 1px dashed var(--line);
+      border-radius: 14px;
+      padding: 9px 11px;
+      margin-top: auto;
+      text-align: left;
+      opacity: .85;
+    }
+
+    .avatar {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: #e4ded2;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+    }
+
+    .human-row div p {
+      margin: 0;
+      font-size: 10.5px;
+      color: var(--muted);
+    }
+
+    .human-row div b {
+      font-size: 11px;
+      color: var(--ink);
+    }
+
+    .chat-btn {
+      margin-left: auto;
+      background: #fff;
+      border: 1.5px solid var(--inka-green);
+      color: var(--inka-green-dark);
+      font-size: 10px;
+      font-weight: 700;
+      padding: 5px 9px;
+      border-radius: 20px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .success-wrap {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      text-align: center;
+    }
+
+    .success-check {
+      width: 76px;
+      height: 76px;
+      border-radius: 50%;
+      background: var(--inka-green);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 34px;
+      margin-bottom: 18px;
+      animation: pop .4s cubic-bezier(.34, 1.56, .64, 1);
+    }
+
+    @keyframes pop {
+      from {
+        transform: scale(0);
+        opacity: 0;
+      }
+
+      to {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    .nav-controls {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .nav-btn {
+      flex: 1;
+      background: #fff;
+      border: 1px solid var(--line);
+      color: var(--ink);
+      padding: 9px;
+      border-radius: 10px;
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .nav-btn:disabled {
+      opacity: .35;
+      cursor: default;
+    }
+
+    .nav-btn.primary {
+      background: var(--ink);
+      color: #fff;
+      border-color: var(--ink);
+    }
+
+    .east-tag {
+      position: absolute;
+      font-size: 9.5px;
+      font-weight: 800;
+      color: #fff;
+      padding: 3px 7px;
+      border-radius: 6px;
+      display: none;
+      z-index: 30;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, .25);
+      pointer-events: none;
+      letter-spacing: .03em;
+    }
+
+    body.show-east .east-tag {
+      display: block;
+    }
+
+    .east-E {
+      background: #0C8F5A;
+    }
+
+    .east-A {
+      background: #E08A00;
+    }
+
+    .east-S {
+      background: #B8860B;
+    }
+
+    .east-T {
+      background: #C0392B;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="stage">
+
+    <div class="panel-left">
+      <p class="eyebrow">PA4 · Grupo 6</p>
+      <h1>Prototipo: validación de receta sin ansiedad</h1>
+      <p>Recorre el flujo tocando "Siguiente". La pantalla 5 concentra el nudge: activa las anotaciones para ver el
+        marco EAST aplicado con el detalle del mecanismo psicológico.</p>
+
+      <ul class="step-list" id="stepList">
+        <li data-i="0" class="active"><span class="step-num">1</span> Ficha de producto</li>
+        <li data-i="1"><span class="step-num">2</span> Carrito</li>
+        <li data-i="2"><span class="step-num">3</span> Guía de receta válida</li>
+        <li data-i="3"><span class="step-num">4</span> Adjuntar receta</li>
+        <li data-i="4"><span class="step-num">5</span> Validación (nudge)</li>
+        <li data-i="5"><span class="step-num">6</span> Confirmación</li>
+      </ul>
+
+      <label class="east-toggle">
+        <div class="switch">
+          <input type="checkbox" id="eastSwitch">
+          <span class="slider"></span>
+        </div>
+        Ver marco EAST aplicado
+      </label>
+
+      <div class="legend" id="legend">
+        <div class="legend-card" style="--c:#0C8F5A;">
+          <b>EASY</b>
+          <p>La intervención elimina el mayor esfuerzo cognitivo de la Fase 3: no saber qué está pasando. Al mostrar una
+            barra de progreso animada con cronómetro en tiempo real, el usuario no necesita tomar ninguna decisión
+            adicional ni salir de la app a revisar el correo. El sistema hace el trabajo visible por él, reduciendo el
+            esfuerzo percibido de esperar a cero acciones requeridas.</p>
+        </div>
+        <div class="legend-card" style="--c:#E08A00;">
+          <b>ATTRACTIVE</b>
+          <p>La barra de progreso animada capta y retiene la atención visual del usuario en un momento donde normalmente
+            cerraría la app. El movimiento dinámico activa el Completion Bias: el cerebro detesta los procesos
+            incompletos y tiende a quedarse para ver el resultado final. El microcopy de protección financiera refuerza
+            esto con un mensaje de alta prominencia visual que convierte la espera en un momento de confianza en lugar
+            de ansiedad.</p>
+        </div>
+        <div class="legend-card" style="--c:#B8860B;">
+          <b>SOCIAL</b>
+          <p>Se incorpora un elemento de norma social en la misma pantalla de espera: "Más de 2,000 personas completaron
+            su compra con receta esta semana." Esto activa la influencia social del Sistema 1 — "si otros lo lograron,
+            yo también puedo" — reduciendo la percepción de riesgo individual y reforzando la decisión de quedarse en el
+            flujo.</p>
+        </div>
+        <div class="legend-card" style="--c:#C0392B;">
+          <b>TIMELY</b>
+          <p>Esta es la dimensión más crítica de la intervención. El nudge aparece exactamente en el momento de mayor
+            vulnerabilidad emocional del usuario: justo después de subir la receta, cuando la incertidumbre y el miedo
+            al cobro están en su pico máximo. Un mensaje de protección financiera en cualquier otra pantalla tendría
+            mucho menos impacto.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="phone-wrap">
+      <div class="phone">
+        <div class="notch"></div>
+        <div class="status-bar"><span>9:41</span><span>●●●● 5G 🔋</span></div>
+
+        <!-- SCREEN 0: Ficha de producto -->
+        <div class="screen active" data-screen="0">
+          <div class="promo-ribbon">🏷️ Precios más bajos con tu cupón <span class="pill">INKA20</span></div>
+          <div class="navbar">
+            <div class="logo-mark"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="11" fill="#00A651" />
+                <g fill="#E52421" stroke="#ffffff" stroke-width="0.6">
+                  <rect x="9.5" y="4.5" width="5" height="15" rx="1" />
+                  <rect x="4.5" y="9.5" width="15" height="5" rx="1" />
+                </g>
+              </svg></div>
+            <span class="logo-word">Inkafarma</span>
+            <div class="nav-icons">
+              <span>🔍</span>
+              <span class="cart-badge">🧾<span>2</span></span>
+              <span class="cart-badge">🛒<span>0</span></span>
+            </div>
+          </div>
+          <div class="pickup-row">📍 Retiro en botica cercana <span class="dist">1.5 km</span></div>
+          <div class="content">
+            <div class="prod-img" style="padding:0;overflow:hidden;">
+              <img
+                src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTqxTXyIilWFbjkMPHqUrJiRIWgkoXfMuvgjNE4VosNqAA_FlpXwa9hP8U_&s=10"
+                alt="Alprazolam 0.5mg Tableta" style="width:100%;height:100%;object-fit:contain;background:#fff;"
+                onerror="this.parentElement.innerHTML='Imagen del producto';">
+            </div>
+            <span class="tag">🔒 Retener receta</span>
+            <div class="prod-title">Alprazolam 0.5mg Tableta</div>
+            <div style="font-size:12px;color:var(--muted);">Caja 100 UN · R.S: EN-08740</div>
+            <div class="price">S/ 6.00</div>
+            <button class="btn-primary" onclick="go(1)">Agregar al carrito</button>
+          </div>
+        </div>
+
+        <!-- SCREEN 1: Carrito -->
+        <div class="screen" data-screen="1">
+          <div class="promo-ribbon">🏷️ Precios más bajos con tu cupón <span class="pill">INKA20</span></div>
+          <div class="navbar">
+            <div class="logo-mark"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="11" fill="#00A651" />
+                <g fill="#E52421" stroke="#ffffff" stroke-width="0.6">
+                  <rect x="9.5" y="4.5" width="5" height="15" rx="1" />
+                  <rect x="4.5" y="9.5" width="15" height="5" rx="1" />
+                </g>
+              </svg></div>
+            <span class="logo-word">Mi carrito</span>
+          </div>
+          <div class="content">
+            <div class="banner-soft">📋 <span>Este producto requiere validar tu receta médica antes de confirmar el
+                pedido.</span></div>
+            <div class="cart-item">
+              <div class="cart-thumb" style="overflow:hidden;background:#fff;">
+                <img
+                  src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTqxTXyIilWFbjkMPHqUrJiRIWgkoXfMuvgjNE4VosNqAA_FlpXwa9hP8U_&s=10"
+                  alt="Alprazolam 0.5mg Tableta" style="width:100%;height:100%;object-fit:contain;"
+                  onerror="this.parentElement.innerHTML='Imagen';">
+              </div>
+              <div>
+                <div style="font-size:13px;font-weight:700;">Alprazolam 0.5mg Tableta</div>
+                <div style="font-size:11.5px;color:var(--muted);">Caja 100 UN · Cant. 1</div>
+                <div style="font-size:13px;font-weight:700;margin-top:4px;">S/ 6.00</div>
+              </div>
+            </div>
+            <div style="margin-top:20px;display:flex;justify-content:space-between;font-size:13px;font-weight:700;">
+              <span>Total a pagar</span><span>S/ 6.00</span>
+            </div>
+            <button class="btn-primary" style="margin-top:16px;" onclick="go(2)">Ir a comprar</button>
+          </div>
+        </div>
+
+        <!-- SCREEN 2: Guía visual (reframe del pop-up punitivo) -->
+        <div class="screen" data-screen="2">
+          <div class="topbar-simple">
+            <div class="logo-mark"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="11" fill="#00A651" />
+                <g fill="#E52421" stroke="#ffffff" stroke-width="0.6">
+                  <rect x="9.5" y="4.5" width="5" height="15" rx="1" />
+                  <rect x="4.5" y="9.5" width="15" height="5" rx="1" />
+                </g>
+              </svg></div><b>Información de la receta</b>
+          </div>
+          <div class="content">
+            <div class="guide-title">Estás a un paso de tu compra 👍</div>
+            <p class="guide-sub">Así validamos tu receta médica. Solo necesitamos que estos 3 datos se vean claros en tu
+              foto:</p>
+
+            <div class="receta-mock">
+              <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap;">
+                <span
+                  style="font-size:10px;background:#eafaf1;color:var(--inka-green-dark);padding:3px 8px;border-radius:20px;font-weight:700;">✔
+                  Sello del médico</span>
+                <span
+                  style="font-size:10px;background:#eafaf1;color:var(--inka-green-dark);padding:3px 8px;border-radius:20px;font-weight:700;">✔
+                  N° de colegiatura</span>
+                <span
+                  style="font-size:10px;background:#eafaf1;color:var(--inka-green-dark);padding:3px 8px;border-radius:20px;font-weight:700;">✔
+                  Vigente</span>
+              </div>
+            </div>
+
+            <ul class="checklist">
+              <li><span class="check-ic">✓</span> Si algo no se ve claro, te avisamos antes de cobrarte — no perderás tu
+                compra.</li>
+            </ul>
+            <button class="btn-primary" onclick="go(3)">Continuar</button>
+          </div>
+        </div>
+
+        <!-- SCREEN 3: Adjuntar receta -->
+        <div class="screen" data-screen="3">
+          <div class="topbar-simple">
+            <div class="logo-mark"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="11" fill="#00A651" />
+                <g fill="#E52421" stroke="#ffffff" stroke-width="0.6">
+                  <rect x="9.5" y="4.5" width="5" height="15" rx="1" />
+                  <rect x="4.5" y="9.5" width="15" height="5" rx="1" />
+                </g>
+              </svg></div><b>Adjuntar receta</b>
+          </div>
+          <div class="content">
+            <p style="font-size:12.5px;color:var(--muted);">Toma una foto o sube el archivo de tu receta médica.</p>
+            <div
+              style="border:1.5px dashed #cfd6d3;border-radius:14px;padding:30px 14px;text-align:center;color:var(--muted);font-size:12.5px;margin:14px 0;">
+              📎 Toca para adjuntar archivo<br>PNG, JPG o PDF · máx. 5MB
+            </div>
+            <button class="btn-primary" onclick="startValidation()">Subir y continuar</button>
+          </div>
+        </div>
+
+        <!-- SCREEN 4: VALIDACIÓN — núcleo de la intervención -->
+        <div class="screen" data-screen="4">
+          <div class="topbar-simple">
+            <div class="logo-mark"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="11" fill="#00A651" />
+                <g fill="#E52421" stroke="#ffffff" stroke-width="0.6">
+                  <rect x="9.5" y="4.5" width="5" height="15" rx="1" />
+                  <rect x="4.5" y="9.5" width="15" height="5" rx="1" />
+                </g>
+              </svg></div><b>Validando tu receta</b>
+          </div>
+          <div class="val-wrap">
+
+            <div style="position:relative;">
+              <div class="val-icon">🕐</div>
+              <span class="east-tag east-T" style="top:-4px;right:66px;">TIMELY</span>
+            </div>
+            <div style="position:relative;">
+              <div class="val-title">Estamos validando tu receta</div>
+              <div class="val-sub">Puedes cerrar esta pantalla, te avisaremos igual.</div>
+              <span class="east-tag east-E" style="top:-2px;left:0;">EASY</span>
+            </div>
+
+            <div style="position:relative;">
+              <div class="progress-track">
+                <div class="progress-fill" id="progressFill"></div>
+              </div>
+              <span class="east-tag east-A" style="top:-18px;right:0;">ATTRACTIVE</span>
+            </div>
+            <div class="countdown-row">
+              <span>Tiempo estimado</span>
+              <b id="countdownText">3:00 min</b>
+            </div>
+
+            <div style="position:relative;">
+              <div class="social-banner">🎉 <span>Más de 2,000 personas completaron su compra con receta esta
+                  semana.</span></div>
+              <span class="east-tag east-S" style="top:-10px;right:0;">SOCIAL</span>
+            </div>
+
+            <div style="position:relative;">
+              <div class="steps-track">
+                <div class="step-row done">
+                  <div class="step-dot">✓</div>
+                  <div class="step-text"><b>Receta recibida</b><span>Hace unos segundos</span></div>
+                </div>
+                <div class="step-row now" id="stepReview">
+                  <div class="step-dot">2</div>
+                  <div class="step-text"><b>En revisión</b><span>En curso</span></div>
+                </div>
+                <div class="step-row">
+                  <div class="step-dot">3</div>
+                  <div class="step-text"><b>Validada</b><span>Pendiente</span></div>
+                </div>
+              </div>
+              <span class="east-tag east-E" style="top:22px;right:0;">EASY</span>
+            </div>
+
+            <div style="position:relative;">
+              <div class="assurance-box">
+                <span>🔒</span>
+                <p><strong>Tu pago está protegido</strong>No se te cobrará nada hasta que el farmacéutico apruebe tu
+                  receta.</p>
+              </div>
+              <span class="east-tag east-A" style="top:-10px;left:0;">ATTRACTIVE</span>
+            </div>
+
+            <div class="human-row">
+              <div class="avatar">👩‍⚕️</div>
+              <div><b>¿Tienes dudas?</b>
+                <p>Escríbele a un farmacéutico</p>
+              </div>
+              <button class="chat-btn">Chatear</button>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- SCREEN 5: Confirmación -->
+        <div class="screen" data-screen="5">
+          <div class="topbar-simple">
+            <div class="logo-mark"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="11" fill="#00A651" />
+                <g fill="#E52421" stroke="#ffffff" stroke-width="0.6">
+                  <rect x="9.5" y="4.5" width="5" height="15" rx="1" />
+                  <rect x="4.5" y="9.5" width="15" height="5" rx="1" />
+                </g>
+              </svg></div><b>Receta validada</b>
+          </div>
+          <div class="success-wrap">
+            <div class="success-check">✓</div>
+            <div style="font-size:16px;font-weight:800;color:var(--ink);margin-bottom:6px;">¡Tu receta fue validada!
+            </div>
+            <p style="font-size:12.5px;color:var(--muted);margin-bottom:22px;">Ya puedes continuar con el pago de tu
+              pedido con total seguridad.</p>
+            <button class="btn-primary" onclick="go(0)">Continuar al pago</button>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="nav-controls">
+        <button class="nav-btn" id="backBtn" onclick="step(-1)">← Atrás</button>
+        <button class="nav-btn primary" id="nextBtn" onclick="step(1)">Siguiente →</button>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    let current = 0;
+    const total = 6;
+    let validationTimer = null;
+
+    function renderStepList() {
+      document.querySelectorAll('#stepList li').forEach(li => {
+        li.classList.toggle('active', Number(li.dataset.i) === current);
+      });
+    }
+
+    function go(i) {
+      clearInterval(validationTimer);
+      current = i;
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.querySelector('.screen[data-screen="' + i + '"]').classList.add('active');
+      renderStepList();
+      document.getElementById('backBtn').disabled = (i === 0);
+      document.getElementById('nextBtn').innerText = (i === total - 1) ? 'Reiniciar' : 'Siguiente →';
+      if (i === 4) { startValidation(); }
+    }
+
+    function step(dir) {
+      let n = current + dir;
+      if (n < 0) n = 0;
+      if (n >= total) n = 0;
+      go(n);
+    }
+
+    document.querySelectorAll('#stepList li').forEach(li => {
+      li.addEventListener('click', () => go(Number(li.dataset.i)));
+    });
+
+    function startValidation() {
+      go(4);
+      const fill = document.getElementById('progressFill');
+      const countdown = document.getElementById('countdownText');
+      let seconds = 8;
+      fill.style.width = '4%';
+      countdown.innerText = '3:00 min';
+      clearInterval(validationTimer);
+      validationTimer = setInterval(() => {
+        seconds -= 1;
+        const pct = Math.min(100, ((8 - seconds) / 8) * 100);
+        fill.style.width = pct + '%';
+        const displaySec = Math.max(0, Math.round((seconds / 8) * 180));
+        const m = Math.floor(displaySec / 60);
+        const s = String(displaySec % 60).padStart(2, '0');
+        countdown.innerText = m + ':' + s + ' min';
+        if (seconds <= 0) {
+          clearInterval(validationTimer);
+          document.getElementById('stepReview').classList.remove('now');
+          document.getElementById('stepReview').classList.add('done');
+          document.getElementById('stepReview').querySelector('.step-dot').innerText = '✓';
+          setTimeout(() => go(5), 700);
+        }
+      }, 700);
+    }
+
+    document.getElementById('eastSwitch').addEventListener('change', (e) => {
+      document.body.classList.toggle('show-east', e.target.checked);
+      document.getElementById('legend').style.display = e.target.checked ? 'flex' : 'none';
+    });
+  </script>
+
+</body>
+
+</html>
